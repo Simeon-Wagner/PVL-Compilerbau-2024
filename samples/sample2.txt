@@ -45,3 +45,12 @@ fsm nondet # ein nicht-deterministischer Automat
 1e	1 	1 		1
 2	1 	2 		3
 3e	- 	- 		-
+
+
+fsm complex
+	a 	    b 	    c 	    \e 			# kann einen Epsilon-�bergang haben
+0s	1|2	    -	    -       3 		# kann mehrere m�gliche Folgezust�nde haben
+1	4 	    1 		-       0
+2	- 	    2 		3       -
+3	- 	    4 		3       2|4
+4e   -       -       -       -

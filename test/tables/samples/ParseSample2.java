@@ -5,6 +5,8 @@ import tables.semantics.symbols.SemanticException;
 import tables.semantics.table.Table;
 
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class ParseSample2 {
@@ -14,15 +16,9 @@ public class ParseSample2 {
 		Parser p = Parser.fromFile("samples/sample2.txt");
 		
 		p.entries();
-		Table t = p.getSymbols().getTable("nondet");
+		Table t = p.getSymbols().getTable("complex");
 		Set <Integer> res = new HashSet<>();
-		res = t.returnStatesEpsilons(res, 0);
-		res.forEach(System.out::println);
-
-		System.out.println("Table t Transitions");
-		t.getTransitions().forEach(System.out::println);
-		t.buildDEA();
-		//System.out.println(p.getSymbols());
+		Map<Set<Integer>, List<Set<Integer>>> dea = t.buildDEA();
 		
 	}
 

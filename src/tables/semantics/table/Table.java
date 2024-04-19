@@ -202,19 +202,18 @@ public class Table {
 	// 								My Methods
 	// -----------------------------------------------------------------------------
 
+
 	public Map<Set<Integer>, List<Set<Integer>>> buildDEA() {
-		Set<Integer> startSet = returnStatesEpsilons(new HashSet<>(), start);
-
+		Set<Integer> currState = returnStatesEpsilons(new HashSet<>(), start);
 		Map<Set<Integer>, List<Set<Integer>>> dea = new HashMap<>();
-		dea.put(startSet, buildNewTransitions(startSet));
+		dea.put(currState, buildNewTransitions(currState));
 
-		while (allValuesAreNotKeys(dea)) {
-			List<Set<Integer>> val = dea.get(startSet);
-
-			for (Set<Integer> v : val) {
-				if (!dea.containsKey(v)){
-					dea.put(v, buildNewTransitions(v));
-					startSet = v;
+		while (!allValuesAreKeys(dea)) {
+			List<Set<Integer>> transitionStates = dea.get(currState);
+			for (Set<Integer> transState : transitionStates ) {
+				if (!dea.containsKey(transState)){
+					dea.put(transState, buildNewTransitions(transState));
+					currState = transState;
 				}
 			}
 		}
@@ -222,50 +221,47 @@ public class Table {
 		return dea;
 	}
 
-	public boolean allValuesAreNotKeys(Map<Set<Integer>, List<Set<Integer>>> map){
+	/*
+		Checks if all state existing in the DEA have their transitions
+	 */
+	public boolean allValuesAreKeys(Map<Set<Integer>, List<Set<Integer>>> map){
 		List<Set<Integer>> valuesList = new ArrayList<>();
 		map.forEach((key, value) -> valuesList.addAll(value));
-
-		for( Set<Integer> set : valuesList ){
-			if(!map.containsKey(set)){
-				return true;
-			}
-		}
-		return false;
+		return valuesList.stream().anyMatch(map::containsKey);
 	}
 
 	/*
-			Exclude the epsilon from the header
-			- create a temporary hash set in which all the values are store reached with a specific expression
-			- check if all the states reached with the specific expression can reach another state with an epsilon
-			- add each set of state reached with a specific expression to the newTransition list
-			- add the start transition as key and the list of transitions reached as key
-		 */
+		 builds a new transition.
+		 - It receives a Set of integers containing the IDs of the states
+		 - A List is created that contains the transition from the passed state-set to the next via a specific expression
+		 - For each state each expression (except epsilon since it is not allowed in DEA) is tested.
+		 - If there is a transition (ID != -1) the ID is being added to the set.
+		 - Before being added there is a check if from this state other states can be reached via epsilon.
+		 - If yes those IDs are added to the newTransition Set too.
+	*/
 	public List<Set<Integer>> buildNewTransitions(Set<Integer> from){
 		List<Set<Integer>> newTransitions = new ArrayList<>();
 		header.stream()
-				.filter(ex -> !ex.isEpsilon())
-				.forEach(ex -> {
-					Set<Integer> res = new HashSet<>();
-					for(Integer el : from){
-						Set<Integer> temp = new HashSet<>(nextNEA(el, ex.toShortString()).stream().filter(x -> x != -1).toList());
-						for (Integer tEl : temp)
-							res.addAll(returnStatesEpsilons(res, tEl));
-					}
-					newTransitions.add(res);
+				.filter(expr -> !expr.isEpsilon())
+				.forEach(expr -> {
+					Set<Integer> newTransition  = new HashSet<>();
+					from.forEach(state ->nextStatesOnExpr(state, expr.toShortString()).stream()
+							.filter(stateID -> stateID != -1)
+							.forEach(stateID-> returnStatesEpsilons(newTransition , stateID)));
+					newTransitions.add(newTransition );
 				});
 		return  newTransitions;
 	}
 
+	/*
+		Checks recursively if a state has a transition to another state via an epsilon expression
+	 */
 	public Set<Integer> returnStatesEpsilons (Set<Integer> states, Integer state){
 		boolean addedSomething = false;
 		if(!states.contains(state)){
 			states.add(state);
-
-			List<Integer> epsilonTransition = nextNEA(state, "\\e").stream()
-					.filter(x -> x != -1 && !states.contains(x))
-					.toList();
-
+			List<Integer> epsilonTransition = nextStatesOnExpr(state, "\\e").stream()
+					.filter(x -> x != -1 && !states.contains(x)).toList();
 			for(Integer s : epsilonTransition){
 					addedSomething = true;
 					states.addAll(returnStatesEpsilons(states, s));
@@ -274,7 +270,7 @@ public class Table {
 		return addedSomething ? states : new HashSet<>();
 	}
 
-	public List<Integer> nextNEA(int state, String expr) {
+	public List<Integer> nextStatesOnExpr(int state, String expr) {
 		ArrayList<Integer > nextStates = new ArrayList<Integer>();
 		// Not an epsilon and not a char
 		if (!expr.equals("\\e") && expr.length() >1){
