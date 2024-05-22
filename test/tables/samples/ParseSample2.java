@@ -15,9 +15,7 @@ public class ParseSample2 {
 		Parser p = Parser.fromFile("samples/sample2.txt");
 		p.entries();
 		Table t = p.getSymbols().getTable("nondet");
-		Set <Integer> res = new HashSet<>();
-		Map<Set<Integer>, List<Set<Integer>>> deaMap = t.buildDEA();
-		Table dea  = t.createTableFromTransformedDEA(deaMap);
+		Table dea = t.toDEA();
 		System.out.println(dea.toString());
 		StateMachine sm = new StateMachine(dea);
 		System.out.println(sm.toDetailedString());

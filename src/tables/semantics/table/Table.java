@@ -202,7 +202,9 @@ public class Table {
 	// 								My Methods
 	// -----------------------------------------------------------------------------
 
-	public Table createTableFromTransformedDEA(Map<Set<Integer>, List<Set<Integer>>> dea) throws SemanticException {
+	public Table toDEA() throws SemanticException {
+
+		Map<Set<Integer>, List<Set<Integer>>> dea = buildDEA();
 		Map <Set<Integer>, SingleState> renamed= new HashMap<>();
 
 		// Get all the keys of the dea, which are all the states of it.
