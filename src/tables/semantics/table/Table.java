@@ -1,5 +1,6 @@
 package tables.semantics.table;
 
+import java.sql.Array;
 import java.util.*;
 
 import tables.semantics.expr.Expr;
@@ -155,7 +156,6 @@ public class Table {
 			for(State s : e.to())
 				if(s.getIds().size() != 1)
 					return false;
-		
 		return true;
 	}
 	
@@ -202,6 +202,53 @@ public class Table {
 	// 								My Methods
 	// -----------------------------------------------------------------------------
 
+	public void renameAutomat(Map<Set<Integer>, List<Set<Integer>>> dea){
+		Map <Set<Integer>, String> renamed= new HashMap<>();
+		// Get all the keys of the dea, which are all the states of it.
+		int currIndex = 0;
+		for (Map.Entry<Set<Integer>, List<Set<Integer>>> entry : dea.entrySet())
+		{
+			renamed.put(entry.getKey(), returnString(entry.getKey(),currIndex));
+			currIndex++;
+		}
+		HashMap <String, List<String>> finalDea = new HashMap<>();
+		for (Map.Entry<Set<Integer>, List<Set<Integer>>> entry : dea.entrySet())
+		{
+			List<Set<Integer>> states = entry.getValue();
+			List<String> renamedStates = new ArrayList<>();
+			for (Set<Integer> state : states){
+				renamedStates.add(renamed.get(state));
+			}
+			finalDea.put(renamed.get(entry.getKey()), renamedStates);
+		}
+		for (Map.Entry<String, List<String>> entry : finalDea.entrySet()) {
+			System.out.print(entry.getKey() + ": ");
+			entry.getValue().forEach(x -> System.out.print(x + " "));
+			System.out.println();
+		}
+
+	}
+	private String returnString(Set<Integer> state, int currIndex){
+		boolean isStart = false;
+		boolean isEnd = false;
+		String stateName= String.valueOf(currIndex);
+		for (Integer i : state){
+			if (i == start)
+				isStart = true;
+
+			if (ends.contains(i))
+				isEnd = true;
+			if(isStart && isEnd){
+				break;
+			}
+		}
+		if (isStart)
+			stateName += "s";
+		if (isEnd)
+			stateName += "e";
+
+		return stateName;
+	}
 
 	public Map<Set<Integer>, List<Set<Integer>>> buildDEA() {
 		Set<Integer> currState = returnStatesEpsilons(new HashSet<>(), start);
