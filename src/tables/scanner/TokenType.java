@@ -15,6 +15,7 @@ public enum TokenType {
 	SINGLE_STATE("[0-9]+"),
 	NO_STATE("-"),
 	STATE_SET("([0-9]+)(\\|([0-9]+))+"),
+	START_END_STATE("[0-9]+(b|B)"), // The b|B means both, start and end state.
 	
 	DEF("def"), 
 	FSM("fsm"),

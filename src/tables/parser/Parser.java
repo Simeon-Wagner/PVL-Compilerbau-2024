@@ -14,12 +14,7 @@ import tables.semantics.expr.Char;
 import tables.semantics.expr.Constant;
 import tables.semantics.expr.Expr;
 import tables.semantics.expr.Range;
-import tables.semantics.states.EndState;
-import tables.semantics.states.NoState;
-import tables.semantics.states.SingleState;
-import tables.semantics.states.StartState;
-import tables.semantics.states.State;
-import tables.semantics.states.StateSet;
+import tables.semantics.states.*;
 import tables.semantics.symbols.SemanticException;
 import tables.semantics.symbols.Symbols;
 import tables.semantics.table.Table;
@@ -55,6 +50,7 @@ public class Parser {
 		types.add(END_STATE);
 		types.add(SINGLE_STATE);
 		types.add(STATE_SET);
+		types.add(START_END_STATE);
 		return types;
 	}
 
@@ -222,6 +218,7 @@ public class Parser {
 		case START_STATE	: s = new StartState(current.image); break;
 		case END_STATE		: s = new EndState(current.image); break;
 		case SINGLE_STATE	: s = new SingleState(current.image); break;
+		case START_END_STATE :s = new StartEndState(current.image); break;
 
 		default : throw new ParseException(current, START_STATE, END_STATE, SINGLE_STATE);
 		}

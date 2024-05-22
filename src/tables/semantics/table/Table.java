@@ -4,7 +4,7 @@ import java.sql.Array;
 import java.util.*;
 
 import tables.semantics.expr.Expr;
-import tables.semantics.states.State;
+import tables.semantics.states.*;
 import tables.semantics.symbols.SemanticException;
 
 public class Table {
@@ -202,33 +202,37 @@ public class Table {
 	// 								My Methods
 	// -----------------------------------------------------------------------------
 
-	public void renameAutomat(Map<Set<Integer>, List<Set<Integer>>> dea){
-		Map <Set<Integer>, String> renamed= new HashMap<>();
+	public Table createTableFromTransformedDEA(Map<Set<Integer>, List<Set<Integer>>> dea) throws SemanticException {
+		Map <Set<Integer>, SingleState> renamed= new HashMap<>();
+
 		// Get all the keys of the dea, which are all the states of it.
 		int currIndex = 0;
 		for (Map.Entry<Set<Integer>, List<Set<Integer>>> entry : dea.entrySet())
 		{
-			renamed.put(entry.getKey(), returnString(entry.getKey(),currIndex));
+			renamed.put(entry.getKey(), returnStates(entry.getKey(),currIndex));
 			currIndex++;
 		}
-		HashMap <String, List<String>> finalDea = new HashMap<>();
+
+		List <Transition> deaTrans = new ArrayList<>();
 		for (Map.Entry<Set<Integer>, List<Set<Integer>>> entry : dea.entrySet())
 		{
 			List<Set<Integer>> states = entry.getValue();
-			List<String> renamedStates = new ArrayList<>();
+			List<State> renamedStates = new ArrayList<>();
 			for (Set<Integer> state : states){
 				renamedStates.add(renamed.get(state));
 			}
-			finalDea.put(renamed.get(entry.getKey()), renamedStates);
-		}
-		for (Map.Entry<String, List<String>> entry : finalDea.entrySet()) {
-			System.out.print(entry.getKey() + ": ");
-			entry.getValue().forEach(x -> System.out.print(x + " "));
-			System.out.println();
+			deaTrans.add(new Transition(renamed.get(entry.getKey()), renamedStates));
 		}
 
+		List<Expr> newHeader = header.stream().filter(expr -> !expr.isEpsilon()).toList();
+
+
+		Table table = new Table(id + "trans", newHeader, deaTrans);
+
+
+        return table;
 	}
-	private String returnString(Set<Integer> state, int currIndex){
+	private SingleState returnStates(Set<Integer> state, int currIndex){
 		boolean isStart = false;
 		boolean isEnd = false;
 		String stateName= String.valueOf(currIndex);
@@ -242,13 +246,18 @@ public class Table {
 				break;
 			}
 		}
-		if (isStart)
-			stateName += "s";
-		if (isEnd)
-			stateName += "e";
+		if (isStart && isEnd){
+			return new StartEndState(stateName+"b");
+		}
+		else if (isStart)
+			return new StartState(stateName+"b");
+		else if (isEnd)
+			return new EndState(stateName+"b");
+		else
+			return new SingleState(stateName);
 
-		return stateName;
 	}
+
 
 	public Map<Set<Integer>, List<Set<Integer>>> buildDEA() {
 		Set<Integer> currState = returnStatesEpsilons(new HashSet<>(), start);

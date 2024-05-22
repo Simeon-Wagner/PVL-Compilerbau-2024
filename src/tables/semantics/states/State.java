@@ -23,7 +23,6 @@ public abstract class State {
 	}
 	
 	public Set<Integer> getIds() {
-
 		throw new UnsupportedOperationException("Illegal Access");
 	}
 	
