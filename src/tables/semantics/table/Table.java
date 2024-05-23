@@ -7,6 +7,7 @@ import tables.semantics.expr.Expr;
 import tables.semantics.states.*;
 import tables.semantics.symbols.SemanticException;
 
+
 public class Table {
 	
 	private final String id;
@@ -72,22 +73,23 @@ public class Table {
 			if(t.from().isEnd())
 				ends.add(t.from().getId());
 		}
+
 		boolean error = false;
 		if(starts.size() == 0) {
 			System.err.println("No start defined for " + id);
 			error = true;
 		}
+
 		if(starts.size() > 1) {
 			System.err.println("Multiple starts defined for " + id);
 			error = true;
 		}
-		
-		
+
 		if(ends.size() == 0) {
 			System.err.println("No ends defined for " + id);
 			error = true;
 		}
-		
+
 		if(error)
 			throw new SemanticException("FSM " + id + " wrongly set starts and ends");
 	}
@@ -107,8 +109,8 @@ public class Table {
 		for(Transition t : transitions) {
 			for(State s : t.to()) {
 				Set<Integer> ids = s.getIds();
-				for(Integer id : ids)
-					if(!s.isNoState() && !defined.contains(id)) {
+				for (Integer id : ids)
+					if (!s.isNoState() && !defined.contains(id)) {
 						System.err.println("FSM " + this.id + " undefined " + id);
 						error = true;
 					}
@@ -205,7 +207,7 @@ public class Table {
 	public Table toDEA() throws SemanticException {
 
 		Map<Set<Integer>, List<Set<Integer>>> dea = buildDEA();
-		Map <Set<Integer>, SingleState> renamed= new HashMap<>();
+		Map <Set<Integer>, State> renamed= new HashMap<>();
 
 		// Get all the keys of the dea, which are all the states of it.
 		int currIndex = 0;
@@ -215,33 +217,35 @@ public class Table {
 			currIndex++;
 		}
 
+
+
 		List <Transition> deaTrans = new ArrayList<>();
 		for (Map.Entry<Set<Integer>, List<Set<Integer>>> entry : dea.entrySet())
 		{
 			List<Set<Integer>> states = entry.getValue();
 			List<State> renamedStates = new ArrayList<>();
 			for (Set<Integer> state : states){
-				renamedStates.add(renamed.get(state));
+				if(state.isEmpty()){
+					renamedStates.add(NoState.instance());
+				}
+				else{
+					renamedStates.add(renamed.get(state));
+				}
 			}
-			deaTrans.add(new Transition(renamed.get(entry.getKey()), renamedStates));
+			deaTrans.add(new Transition((SingleState) renamed.get(entry.getKey()), renamedStates));
 		}
 
 		List<Expr> newHeader = header.stream().filter(expr -> !expr.isEpsilon()).toList();
-
-
-		Table table = new Table(id + "trans", newHeader, deaTrans);
-
-
-        return table;
+		return new Table(id + "-trans", newHeader, deaTrans);
 	}
-	private SingleState returnStates(Set<Integer> state, int currIndex){
+
+	private State returnStates(Set<Integer> state, int currIndex){
 		boolean isStart = false;
 		boolean isEnd = false;
 		String stateName= String.valueOf(currIndex);
 		for (Integer i : state){
 			if (i == start)
 				isStart = true;
-
 			if (ends.contains(i))
 				isEnd = true;
 			if(isStart && isEnd){
@@ -252,40 +256,34 @@ public class Table {
 			return new StartEndState(stateName+"b");
 		}
 		else if (isStart)
-			return new StartState(stateName+"b");
+			return new StartState(stateName+"s");
 		else if (isEnd)
-			return new EndState(stateName+"b");
+			return new EndState(stateName+"e");
 		else
 			return new SingleState(stateName);
 
 	}
 
-
 	public Map<Set<Integer>, List<Set<Integer>>> buildDEA() {
 		Set<Integer> currState = returnStatesEpsilons(new HashSet<>(), start);
 		Map<Set<Integer>, List<Set<Integer>>> dea = new HashMap<>();
-		dea.put(currState, buildNewTransitions(currState));
 
-		while (!allValuesAreKeys(dea)) {
-			List<Set<Integer>> transitionStates = dea.get(currState);
-			for (Set<Integer> transState : transitionStates ) {
-				if (!dea.containsKey(transState)){
-					dea.put(transState, buildNewTransitions(transState));
-					currState = transState;
+		List<Set<Integer>> states = new ArrayList<>();
+		states.add(currState);
+
+		for(int i = 0; i < states.size(); i++){
+			currState = states.get(i);
+			List<Set<Integer>> newTrans = buildNewTransitions(currState);
+			for (Set<Integer> state : newTrans){
+				if (!dea.containsKey(state) && !state.isEmpty()) {
+					states.add(state);
 				}
 			}
+			dea.put(currState, newTrans);
 		}
+
 		dea.forEach((key, value) -> System.out.println(key + ": " + value));
 		return dea;
-	}
-
-	/*
-		Checks if all state existing in the DEA have their transitions
-	 */
-	public boolean allValuesAreKeys(Map<Set<Integer>, List<Set<Integer>>> map){
-		List<Set<Integer>> valuesList = new ArrayList<>();
-		map.forEach((key, value) -> valuesList.addAll(value));
-		return valuesList.stream().anyMatch(map::containsKey);
 	}
 
 	/*
@@ -426,5 +424,4 @@ public class Table {
 		toString = sb.toString();
 		return toString;		
 	}
-
 }

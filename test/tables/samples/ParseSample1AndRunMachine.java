@@ -17,7 +17,7 @@ public class ParseSample1AndRunMachine {
 		
 		StateMachine sm = new StateMachine(s.getTable("integer"));
 		System.out.println(sm.toDetailedString());
-		
+		/*
 		{
 			sm.init();
 			int pos = 0;
@@ -39,6 +39,8 @@ public class ParseSample1AndRunMachine {
 			}
 			System.out.println("Consuption of '" + input + "' succeeded" + " : " + sm.succeeded());
 		}
+
+		 */
 	}
 
 }
